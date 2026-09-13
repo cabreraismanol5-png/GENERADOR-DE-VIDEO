@@ -2,7 +2,7 @@ const express=require("express"),path=require("path"),OpenAI=require("openai");
 require("dotenv").config(); const app=express();
 app.use(express.json({limit:"4mb"})); app.use(express.static(path.join(__dirname,"public")));
 const ai=process.env.OPENAI_API_KEY?new OpenAI({apiKey:process.env.OPENAI_API_KEY}):null;
-
+ 
 app.post("/api/generate",async(req,res)=>{
  try{
   const {idea,language="Español",duration=60,style="Cinemático",format="16:9",voice="Narrador"}=req.body;
@@ -22,5 +22,8 @@ Devuelve SOLO JSON válido con title y scenes. Cada scene: n, seconds, narration
   res.json({demo:false,language,duration,format,...data});
  }catch(e){res.status(500).json({error:e.message})}
 });
-app.get("*",(req,res)=>res.sendFile(path.join(__dirname,"public","index.html")));
+ 
+app.use((req,res)=>res.sendFile(path.join(__dirname,"public","index.html")));
+ 
 app.listen(process.env.PORT||3000,()=>console.log("V1 lista"));
+ 
