@@ -114,4 +114,4 @@ app.post("/api/render", async (req, res) => {
 });
 
 app.use((req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
-app.listen(process.env.PORT || 3000, () => console.log("V2 lista (guion + imagen + voz + video)"));
+app.listen(process.env.PORT || 3000, "0.0.0.0", () => console.log("V2 lista (guion + imagen + voz + video)"));
