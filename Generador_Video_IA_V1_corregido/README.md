@@ -1,4 +1,8 @@
-# Generador de Video IA — V1
+# Generador de Video IA — V2
+
+## Qué hace ahora
+- **Fase 1 (guion):** genera el plan de escenas (narración + descripción visual) a partir de tu idea.
+- **Fase 2 (video real):** por cada escena genera una **imagen con DALL·E 3**, una **narración en voz con TTS de OpenAI**, y las une en un **video final .mp4** usando `ffmpeg` (imagen fija + audio por escena, luego concatenadas).
 
 ## Cómo ejecutarlo
 
@@ -11,7 +15,7 @@
    ```
    OPENAI_API_KEY=sk-tu-clave-aqui
    ```
-   Si dejas `OPENAI_API_KEY` vacío, la app funciona en **modo demo** (genera un guion de ejemplo, sin llamar a la API).
+   Sin esta clave, la app funciona en **modo demo** solo para el guion (Fase 1). El botón "Generar Video Real" **requiere** la clave.
 
 3. Iniciar el servidor:
    ```
@@ -23,6 +27,8 @@
    http://localhost:3000
    ```
 
-## Notas
-- El modelo usado por defecto es `gpt-4o-mini`. Puedes cambiarlo en `server.js` (línea con `ai.responses.create`) por otro modelo de tu cuenta de OpenAI.
-- Esta versión (V1) solo genera el **plan de escenas** (guion + descripción visual). La generación real de imágenes, video y voz se conecta en una fase posterior.
+## Notas y límites importantes
+- El renderizado de video es **síncrono**: la petición espera a que se generen todas las imágenes, audios y el video final antes de responder. Para videos de muchas escenas puede tardar varios minutos.
+- En plataformas como Render, si el proxy tiene un timeout corto, una petición muy larga puede cortarse antes de terminar. Si esto pasa, reduce el número de escenas/duración, o mueve el renderizado a un trabajo en segundo plano con cola (fase futura).
+- Cada render consume créditos reales de tu cuenta de OpenAI (imágenes DALL·E 3 + audio TTS).
+- El modelo de guion es `gpt-4o-mini`, imágenes `dall-e-3`, voz `tts-1`. Puedes cambiarlos en `server.js`.

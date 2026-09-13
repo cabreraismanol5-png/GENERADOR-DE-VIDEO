@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Generador de Video IA — V1</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui;background:#080b14;color:#f4f6ff}
+header{padding:18px 6%;border-bottom:1px solid #20263a;background:#0c1020;display:flex;justify-content:space-between}
+.logo{font-size:21px;font-weight:800}.badge{font-size:12px;padding:7px 10px;border:1px solid #33405f;border-radius:99px}
+main{max-width:1100px;margin:auto;padding:28px 18px}.grid{display:grid;grid-template-columns:390px 1fr;gap:18px}
+.card{background:#111728;border:1px solid #252e46;border-radius:18px;padding:20px;box-shadow:0 12px 35px #0003}
+label{display:block;margin-top:13px;font-size:13px;color:#b8c0d8}input,textarea,select{width:100%;margin-top:7px;padding:12px;border-radius:10px;border:1px solid #34405d;background:#0b1020;color:white}
+button{width:100%;padding:13px;border:0;border-radius:11px;background:#5b6cff;color:white;font-weight:800;cursor:pointer;margin-top:16px}
+button.secondary{background:#202a43}button:disabled{opacity:.5}
+#result{min-height:420px}.scene{border:1px solid #29344e;border-radius:13px;padding:14px;margin:10px 0;background:#0d1322}
+.scene h3{margin:0 0 8px}.muted{color:#9aa6c3;font-size:13px}.actions{display:flex;gap:8px}.actions button{margin-top:10px}
+.actions button{flex:1}.ok{padding:12px;background:#102c20;border:1px solid #1d6b48;border-radius:10px;color:#bff5d9}
+@media(max-width:800px){.grid{grid-template-columns:1fr}}
+</style></head>
+<body>
+<header><div class="logo">🎬 Generador Video IA</div><div class="badge">V1 FUNCIONAL</div></header>
+<main><div class="grid">
+<section class="card">
+<h2>Crear video</h2>
+<label>Idea o guion</label><textarea id="idea" rows="7" placeholder="Ej.: Un niño encuentra un pequeño dinosaurio y aprende a cuidarlo..."></textarea>
+<label>Idioma del video</label><select id="language"><option>Español</option><option>English</option><option>Français</option><option>Português</option><option>Italiano</option><option>Deutsch</option><option>日本語</option><option>한국어</option><option>中文</option></select>
+<label>Duración</label><select id="duration"><option value="30">30 segundos</option><option value="60" selected>1 minuto</option><option value="180">3 minutos</option><option value="300">5 minutos</option><option value="600">10 minutos</option></select>
+<label>Estilo</label><select id="style"><option>Cinemático</option><option>Animación 3D</option><option>Realista</option><option>Documental</option><option>Infantil</option><option>Anime</option><option>Vertical viral</option></select>
+<label>Formato</label><select id="format"><option value="16:9">YouTube 16:9</option><option value="9:16">Shorts / TikTok 9:16</option><option value="1:1">Cuadrado 1:1</option></select>
+<label>Voz</label><select id="voice"><option>Narrador</option><option>Voz femenina</option><option>Voz masculina</option><option>Personajes</option></select>
+<button id="go" onclick="generate()">🚀 GENERAR VIDEO</button>
+<p class="muted">V1 genera automáticamente el plan de escenas. Las APIs de imagen, video y voz se conectan en la siguiente fase.</p>
+</section>
+<section class="card" id="result"><h2>Tu proyecto</h2><p class="muted">Escribe una idea y pulsa “Generar video”.</p></section>
+</div></main>
+<script>
+let project=null;
+async function generate(){
+ const b=document.getElementById("go"); b.disabled=true;b.textContent="⏳ Creando proyecto...";
+ const payload={idea:idea.value,language:language.value,duration:+duration.value,style:style.value,format:format.value,voice:voice.value};
+ try{const r=await fetch("/api/generate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});project=await r.json();if(project.error)throw Error(project.error);render();}
+ catch(e){document.getElementById("result").innerHTML="<h2>Error</h2><div class='scene'>"+e.message+"</div>"}
+ b.disabled=false;b.textContent="🚀 GENERAR VIDEO";
+}
+function render(){
+ let html="<h2>"+esc(project.title||"Proyecto")+"</h2><div class='ok'>✅ Proyecto creado · "+esc(project.language)+" · "+project.format+"</div>";
+ html+="<div class='actions'><button class='secondary' onclick='downloadScript()'>⬇️ Descargar guion</button><button class='secondary' onclick='downloadProject()'>⬇️ Descargar proyecto</button></div>";
+ html+="<button id='renderBtn' onclick='renderVideo()'>🎬 Generar Video Real (imagen + voz + video)</button>";
+ html+="<p class='muted' id='renderHint'>Usa DALL·E 3 y voz IA. Puede tardar 1–3 minutos y consume créditos de tu cuenta OpenAI.</p>";
+ html+="<h3>Escenas</h3>";
+ (project.scenes||[]).forEach(s=>html+=`<div class="scene"><h3>Escena ${s.n} <span class="muted">· ${s.seconds}s</span></h3><b>Narración</b><p>${esc(s.narration)}</p><b>Visual</b><p class="muted">${esc(s.visual)}</p><b>Texto</b><p>${esc(s.text||"")}</p></div>`);
+ document.getElementById("result").innerHTML=html;
+}
+function esc(x){return String(x??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function save(name,text,type){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click()}
+function downloadScript(){save("guion-video-ia.txt",(project.title+"\n\n"+project.scenes.map(s=>`ESCENA ${s.n} (${s.seconds}s)\nNarración: ${s.narration}\nVisual: ${s.visual}\nTexto: ${s.text}`).join("\n\n")),"text/plain")}
+function downloadProject(){save("proyecto-video-ia.json",JSON.stringify(project,null,2),"application/json")}
+async function renderVideo(){
+ const btn=document.getElementById("renderBtn");
+ const original=btn.textContent;
+ btn.disabled=true;btn.textContent="⏳ Generando video, no cierres esta pestaña...";
+ try{
+  const r=await fetch("/api/render",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({project})});
+  if(!r.ok){const err=await r.json().catch(()=>({error:"Error generando el video."}));throw Error(err.error);}
+  const blob=await r.blob();
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");a.href=url;a.download="video-ia.mp4";a.click();
+  document.getElementById("result").insertAdjacentHTML("beforeend",`<video controls style="width:100%;margin-top:14px;border-radius:12px" src="${url}"></video>`);
+ }catch(e){ alert("Error generando el video: "+e.message); }
+ btn.disabled=false;btn.textContent=original;
+}
+</script></body></html>
